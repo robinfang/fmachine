@@ -1,1 +1,3 @@
 *.pyc
+instance/
+app/node_modules/

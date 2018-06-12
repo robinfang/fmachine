@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Timeline</title>
+    <link href="https://unpkg.com/flatpickr@4/dist/flatpickr.min.css" rel="stylesheet">
+</head>
+
+<body>
+    <h1>Timeline</h1>
+   
+    <hr/>
+    <main id="app">
+       <p>显示所有项目</p>
+        <ul id="example-1" v-if="items.length">
+            <li v-for="item in items">
+                {{ item }}
+            </li>
+        </ul>
+        <h1>新增项目</h1>
+        <flat-pickr v-model="date" :config="config" placeholder="Select a date"></flat-pickr>
+         <p>时间： {{date}} 时区：{{"+"+timezone}}</p>
+        输入标题：
+        <input v-model="title" placeholder="edit me"/>
+        <p>标题为: {{ title }}</p>
+        输入内容：
+        <textarea v-model="content" placeholder="edit me"></textarea>
+        <p>内容为: {{ content }}</p>
+        <button v-on:click='submit'>提交！</button>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/flatpickr@4/dist/flatpickr.min.js"></script>
+    <!-- Vue js -->
+    <!-- Lastly add this package -->
+    <script src="https://unpkg.com/vue-flatpickr-component@7"></script>
+    <script type="text/javascript" src="static/js/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function() {
+        Vue.component('flat-pickr', VueFlatpickr);
+        var time_picker = new Vue({
+            el: '#app',
+            data: {
+                date: null,
+                // https://chmln.github.io/flatpickr/options/
+                items: [],
+                config: {
+                    enableTime: true,
+                    time_24hr: true,
+                    altFormat: "Y-m-d D H:i",
+                    altInput: true
+                },
+                title:"",
+                content:""
+            },
+            mounted: function(){
+              this.refreshlist();
+              this.date = new Date();
+            },
+            computed: {
+              d: function(){
+                var d = new Date(this.date);
+                return d;
+              }
+              ,
+              timezone: function(){
+                return -this.d.getTimezoneOffset()/60;
+              }
+            },
+            methods: {
+              refreshlist: function(){
+                $.get('/api/titems', (data, status) => {
+                  this.items = JSON.parse(data);
+                });
+              },
+              submit: function(event){
+                var data = {};
+                data['timestamp'] = this.d.getTime();
+                console.log(data)
+                data['title'] = this.title;
+                data['content'] = this.content;
+                $.ajax({
+                  url: 'api/titems/', 
+                  type: 'post',
+                  data: JSON.stringify(data),
+                  headers:{'content-type':' application/json'},
+                  success: (data, status) => {
+                    console.log("Data: " + data + "\nStatus: " + status);
+                    this.refreshlist();
+                    }
+                });
+              }
+            }
+        });
+
+    });
+    </script>
+</body>
+
+</html>
